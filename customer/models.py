@@ -2,7 +2,6 @@
 from django.db import models
 from datetime import datetime, date
 
-# Create your models here.
 class Customer(models.Model):
     SEX_CHOICES = (
         ('M', u'男性'),
@@ -16,14 +15,14 @@ class Customer(models.Model):
     pref = models.CharField(u'都道府県', max_length=20)
     add1 = models.CharField(u'住所1', max_length=256)
     add2 = models.CharField(u'住所2', max_length=256, blank=True)
-    tel1  = models.CharField(u'TEL', max_length= 20)
-    tel1_is_mobile = models.BooleanField(default= False)
+    tel1  = models.CharField(u'TEL1', max_length= 20)
+    tel1_is_mobile = models.BooleanField(u'TEL1は携帯電話', default= False)
     tel2 = models.CharField(u'TEL2', max_length = 20, blank=True)
-    tel2_is_mobile = models.BooleanField(default= False)
-    email1 = models.CharField(u'email', max_length=100)
-    email1_is_mobile = models.BooleanField(default= False)
+    tel2_is_mobile = models.BooleanField(u'TEL2は携帯電話', default= False)
+    email1 = models.CharField(u'email1', max_length=100)
+    email1_is_mobile = models.BooleanField(u'email1は携帯メール', default= False)
     email2 = models.CharField(u'email2', max_length=100, blank=True)
-    email2_is_mobile = models.BooleanField(default= False)
+    email2_is_mobile = models.BooleanField(u'email2は携帯メール', default= False)
     sex  = models.CharField(u'性別', max_length=1, choices=SEX_CHOICES)
     birthday = models.DateField(u'生年月日', null=True, blank=True)
     age  = models.IntegerField(u'年齢', null=True, blank=True)
@@ -32,7 +31,7 @@ class Customer(models.Model):
     first_buy = models.DateField(u'初回購入日', null=True, blank=True)
     
     def __unicode__(self):
-        return '%s %s: %s%s %s' % (self.sei, self.mei, self.pref, self.add1, self.tel)
+        return '%s %s: %s%s (%s)' % (self.sei, self.mei, self.pref, self.add1, self.tel1)
     
     def name(self):
         return '%s %s' % (self.sei, self.mei)
@@ -53,6 +52,9 @@ class CustomerMemo(models.Model):
 
 class Size(models.Model):
     name = models.CharField(u'サイズ名', max_length=20)
+    
+    def __unicode__(self):
+        return self.name
 
 
 class Item(models.Model):
@@ -62,7 +64,7 @@ class Item(models.Model):
     memo = models.TextField(u'商品メモ', blank=True)
     
     def __unicode__(self):
-        return '%s %s %d円' % (self.code, self.name, self.price)
+        return u'%s %s %d円' % (self.code, self.name, self.price)
 
 
 class SalesSlip(models.Model):
@@ -86,10 +88,16 @@ class SalesSlip(models.Model):
     memo = models.TextField(u'備考', blank=True)
     
     def __unicode__(self):
-        return u'%s 注文' % (self.orders_date.strftimr('%Y/%m%d %H:%M'))
+        return u'%s: %s 様より注文：ご注文金額 %d円' % (self.orders_date.strftime('%Y/%m/%d %H:%M'), self.customer.name(), self.total())
+        
+    def total(self):
+        details = self.salesdetail_set.all()
+        total_amount = 0
+        for detail in details:
+            total_amount += detail.subtotal()
+        return total_amount
 
-
-class Sales_Detail(models.Model):
+class SalesDetail(models.Model):
     salesslip = models.ForeignKey(SalesSlip)
     item = models.ForeignKey(Item)
     price = models.IntegerField(u'単価', default=0)
@@ -97,11 +105,12 @@ class Sales_Detail(models.Model):
     quantity = models.IntegerField(u'数量', default=0)
     memo = models.TextField(u'備考', blank=True)
     
-    def __unicode__(self):
-        return '%s %s %d円 %d個 %d円' % (self.item.name, self.size.name, self.price, self.quantity, subtotal(self))
-    
     def subtotal(self):
         return self.price * self.quantity
+
+    def __unicode__(self):
+        return u'%s %s %d円 %d個 %d円' % (self.item.name, self.size.name, self.price, self.quantity, self.subtotal())
+    
 
 
 
