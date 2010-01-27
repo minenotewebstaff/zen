@@ -77,6 +77,6 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'zen.customer',
     'django.contrib.admin',
+    'zen.customer',
 )
